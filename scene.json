@@ -1,0 +1,25 @@
+{
+  "targets": [
+    {
+      "id": 0,
+      "type": "video",
+      "ios": "./assets/videos/mural1.mp4",
+      "android": "./assets/videos/mural1.webm"
+    },
+
+    {
+      "id": 1,
+      "type": "video",
+      "ios": "./assets/videos/mural2.mp4",
+      "android": "./assets/videos/mural2.webm"
+    },
+
+    {
+      "id": 2,
+      "type": "sequence",
+      "path": "./assets/mural3",
+      "frames": 480,
+      "extension": "webp"
+    }
+  ]
+}
