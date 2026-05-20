@@ -1,24 +1,68 @@
 {
   "targets": [
+
     {
       "id": 0,
-      "type": "video",
-      "ios": "./assets/videos/pajaro derecho sin fondo.mp4",
-      "android": "./assets/videos/pajaro derecho sin fondo.webm"
+
+      "type": "hybrid",
+
+      "android": {
+        "type": "video",
+        "src": "./assets/videos/pajaro derecho sin fondo.webm"
+      },
+
+      "ios": {
+        "type": "sequence",
+        "path": "./assets/pajaro_derecha",
+        "frames": 180,
+        "extension": "webp"
+      },
+
+      "width": 5,
+      "height": 7
     },
 
     {
       "id": 1,
-      "type": "video",
-      "ios": "./assets/videos/pajaro izquierdo sin fondo.mp4",
-      "android": "./assets/videos/pajaro izquierdo sin fondo.webm"
+
+      "type": "hybrid",
+
+      "android": {
+        "type": "video",
+        "src": "./assets/videos/pajaro izquierdo sin fondo.webm"
+      },
+
+      "ios": {
+        "type": "sequence",
+        "path": "./assets/pajaro_izquierda",
+        "frames": 180,
+        "extension": "webp"
+      },
+
+      "width": 5,
+      "height": 7
     },
 
     {
       "id": 2,
-      "type": "video",
-      "ios": "./assets/videos/Riobamba sin fondo.webm",
-      "android": "./assets/videos/Riobamba sin fondo.webm"
+
+      "type": "hybrid",
+
+      "android": {
+        "type": "video",
+        "src": "./assets/videos/Riobamba sin fondo.webm"
+      },
+
+      "ios": {
+        "type": "sequence",
+        "path": "./assets/riobamba",
+        "frames": 180,
+        "extension": "webp"
+      },
+
+      "width": 7,
+      "height": 4
     }
+
   ]
 }
