@@ -16,11 +16,16 @@
   "
 />
 
-<title>MultiTarget WebAR</title>
+<title>Hybrid WebAR</title>
 
+<!-- AFRAME -->
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
+<!-- MINDAR -->
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+<!-- APP -->
+<script defer src="./js/app.js"></script>
 
 <style>
 
@@ -81,49 +86,13 @@ video {
   device-orientation-permission-ui="enabled: false"
 
   mindar-image="
-    imageTargetSrc: ./targets/josue.mind;
+    imageTargetSrc: ./targets/pruebas.mind;
     autoStart: true;
     uiScanning: true;
     uiLoading: true;
     maxTrack: 1;
   "
 >
-
-<a-assets>
-
-  <!-- VIDEOS -->
-
-  <video
-    id="video0"
-    src="./assets/pajaro derecho sin fondo.webm"
-    loop
-    muted
-    playsinline
-    webkit-playsinline
-    crossorigin="anonymous"
-  ></video>
-
-  <video
-    id="video1"
-    src="./assets/pajaro izquierdo sin fondo.webm"
-    loop
-    muted
-    playsinline
-    webkit-playsinline
-    crossorigin="anonymous"
-  ></video>
-
-  <video
-    id="video2"
-    src="./assets/Riobamba sin fondo.webm"
-    loop
-    muted
-    playsinline
-    webkit-playsinline
-    crossorigin="anonymous"
-  ></video>
-
-</a-assets>
 
 <!-- CAMERA -->
 
@@ -132,97 +101,31 @@ video {
   look-controls="enabled: false"
 ></a-camera>
 
-<!-- TARGET 0 = PAJARO DERECHA -->
+<!-- TARGET 0 -->
 
-<a-entity id="target0" mindar-image-target="targetIndex: 0">
-
-  <a-video
-    src="#video0"
-    width="3"
-    height="5"
-    position="0 0 0"
-  >
-  </a-video>
-
+<a-entity
+  id="target0"
+  mindar-image-target="targetIndex: 0"
+>
 </a-entity>
 
-<!-- TARGET 1 = IZQUIERDA -->
+<!-- TARGET 1 -->
 
-<a-entity id="target1" mindar-image-target="targetIndex: 1">
-
-  <a-video
-    src="#video1"
-    width="3"
-    height="5"
-    position="0 0 0"
-  >
-  </a-video>
-
+<a-entity
+  id="target1"
+  mindar-image-target="targetIndex: 1"
+>
 </a-entity>
 
-<!-- TARGET 2 = CENTRO -->
+<!-- TARGET 2 -->
 
-<a-entity id="target2" mindar-image-target="targetIndex: 2">
-
-  <a-video
-    src="#video2"
-    width="1.5"
-    height="1.5"
-    position="0 0 0"
-  >
-  </a-video>
-
+<a-entity
+  id="target2"
+  mindar-image-target="targetIndex: 2"
+>
 </a-entity>
 
 </a-scene>
-
-<script>
-
-const targets = [
-  {
-    target: document.querySelector("#target0"),
-    video: document.querySelector("#video0"),
-  },
-
-  {
-    target: document.querySelector("#target1"),
-    video: document.querySelector("#video1"),
-  },
-
-  {
-    target: document.querySelector("#target2"),
-    video: document.querySelector("#video2"),
-  },
-];
-
-targets.forEach((item) => {
-
-  item.target.addEventListener("targetFound", async () => {
-
-    console.log("FOUND");
-
-    // PAUSAR TODOS
-    targets.forEach((t) => {
-      t.video.pause();
-      t.video.currentTime = 0;
-    });
-
-    // REPRODUCIR ACTUAL
-    await item.video.play();
-
-  });
-
-  item.target.addEventListener("targetLost", () => {
-
-    console.log("LOST");
-
-    item.video.pause();
-
-  });
-
-});
-
-</script>
 
 </body>
 </html>
