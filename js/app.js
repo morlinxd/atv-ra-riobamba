@@ -1,13 +1,15 @@
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isIOS =
+  /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 let sceneData = null;
 
-let activeContent = null;
+let activeAnimation = null;
 
 window.addEventListener("DOMContentLoaded", async () => {
 
-  const res = await fetch("./scene.json");
-  sceneData = await res.json();
+  const response = await fetch("./scene.json");
+
+  sceneData = await response.json();
 
   initTargets();
 
@@ -23,23 +25,19 @@ function initTargets() {
 
     target.addEventListener("targetFound", async () => {
 
-      console.log("TARGET FOUND:", config.id);
+      console.log("🎯 TARGET:", config.id);
 
-      document.getElementById("loading").style.display = "none";
+      clearTargets();
 
-      if (activeContent !== null && activeContent !== config.id) {
-        unloadTarget(activeContent);
+      if (isIOS) {
+
+        await loadSequence(target, config);
+
+      } else {
+
+        await loadVideo(target, config);
+
       }
-
-      activeContent = config.id;
-
-      await loadTarget(config);
-
-    });
-
-    target.addEventListener("targetLost", () => {
-
-      console.log("TARGET LOST:", config.id);
 
     });
 
@@ -47,88 +45,105 @@ function initTargets() {
 
 }
 
-async function loadTarget(config) {
+function clearTargets() {
 
-  unloadTarget(config.id);
+  cancelAnimationFrame(activeAnimation);
 
-  if (config.type === "video") {
+  document
+    .querySelectorAll("[mindar-image-target]")
+    .forEach((target) => {
 
-    await loadVideo(config);
+      target.innerHTML = "";
 
-  }
-
-  if (config.type === "sequence") {
-
-    await loadSequence(config);
-
-  }
+    });
 
 }
 
-function unloadTarget(id) {
+// ======================================
+// VIDEO ANDROID
+// ======================================
 
-  const target = document.querySelector(
-    `[mindar-image-target="targetIndex: ${id}"]`
-  );
-
-  target.innerHTML = "";
-
-}
-
-async function loadVideo(config) {
-
-  const target = document.querySelector(
-    `[mindar-image-target="targetIndex: ${config.id}"]`
-  );
+async function loadVideo(target, config) {
 
   const video = document.createElement("video");
 
-  video.src = isIOS
-    ? config.ios
-    : config.android;
+  video.src = config.android.src;
 
   video.crossOrigin = "anonymous";
 
   video.loop = true;
+
   video.muted = true;
+
   video.playsInline = true;
 
-  video.setAttribute("webkit-playsinline", "true");
+  video.setAttribute(
+    "webkit-playsinline",
+    "true"
+  );
 
   await video.play().catch(() => {});
 
-  const videoAsset = document.createElement("a-video");
+  const videoEntity =
+    document.createElement("a-video");
 
-  videoAsset.setAttribute("src", video.src);
+  videoEntity.setAttribute("src", video.src);
 
-  videoAsset.setAttribute("width", "1");
-  videoAsset.setAttribute("height", "0.6");
+  videoEntity.setAttribute(
+    "width",
+    config.width || 5
+  );
 
-  videoAsset.setAttribute("position", "0 0 0");
+  videoEntity.setAttribute(
+    "height",
+    config.height || 7
+  );
 
-  target.appendChild(videoAsset);
+  videoEntity.setAttribute(
+    "position",
+    "0 0 0"
+  );
+
+  target.appendChild(videoEntity);
 
 }
 
-async function loadSequence(config) {
+// ======================================
+// SEQUENCE IOS
+// ======================================
 
-  const target = document.querySelector(
-    `[mindar-image-target="targetIndex: ${config.id}"]`
-  );
+async function loadSequence(target, config) {
+
+  const sequence = config.ios;
 
   const canvas = document.createElement("canvas");
 
   canvas.width = 1024;
+
   canvas.height = 1024;
 
   const ctx = canvas.getContext("2d");
 
-  const texture = new THREE.CanvasTexture(canvas);
+  const texture =
+    new THREE.CanvasTexture(canvas);
 
-  const plane = document.createElement("a-plane");
+  const plane =
+    document.createElement("a-plane");
 
-  plane.setAttribute("width", "1");
-  plane.setAttribute("height", "1");
+  plane.setAttribute(
+    "width",
+    config.width || 5
+  );
+
+  plane.setAttribute(
+    "height",
+    config.height || 7
+  );
+
+  plane.setAttribute(
+    "position",
+    "0 0 0"
+  );
 
   target.appendChild(plane);
 
@@ -136,29 +151,67 @@ async function loadSequence(config) {
 
   async function animate() {
 
+    const num =
+      String(frame).padStart(4, "0");
+
+    const imagePath =
+      `${sequence.path}/frame_${num}.${sequence.extension}`;
+
     const img = new Image();
 
-    const num = String(frame).padStart(4, "0");
+    img.src = imagePath;
 
-    img.src = `${config.path}/frame_${num}.${config.extension}`;
+    try {
 
-    await img.decode();
+      await img.decode();
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
 
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(
+        img,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
 
-    texture.needsUpdate = true;
+      texture.needsUpdate = true;
 
-    plane.getObject3D("mesh").material.map = texture;
+      const mesh =
+        plane.getObject3D("mesh");
 
-    frame++;
+      if (mesh) {
 
-    if (frame > config.frames) {
-      frame = 1;
+        mesh.material.map = texture;
+
+        mesh.material.transparent = true;
+
+        mesh.material.needsUpdate = true;
+
+      }
+
+      frame++;
+
+      if (frame > sequence.frames) {
+        frame = 1;
+      }
+
+      activeAnimation =
+        requestAnimationFrame(animate);
+
+    } catch (err) {
+
+      console.error(
+        "❌ Frame error:",
+        imagePath
+      );
+
     }
-
-    requestAnimationFrame(animate);
 
   }
 
