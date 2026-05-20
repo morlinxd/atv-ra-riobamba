@@ -3,23 +3,22 @@
     {
       "id": 0,
       "type": "video",
-      "ios": "./assets/videos/mural1.mp4",
-      "android": "./assets/videos/mural1.webm"
+      "ios": "./assets/videos/pajaro derecho sin fondo.mp4",
+      "android": "./assets/videos/pajaro derecho sin fondo.webm"
     },
 
     {
       "id": 1,
       "type": "video",
-      "ios": "./assets/videos/mural2.mp4",
-      "android": "./assets/videos/mural2.webm"
+      "ios": "./assets/videos/pajaro izquierdo sin fondo.mp4",
+      "android": "./assets/videos/pajaro izquierdo sin fondo.webm"
     },
 
     {
       "id": 2,
-      "type": "sequence",
-      "path": "./assets/mural3",
-      "frames": 480,
-      "extension": "webp"
+      "type": "video",
+      "ios": "./assets/videos/Riobamba sin fondo.webm",
+      "android": "./assets/videos/Riobamba sin fondo.webm"
     }
   ]
 }
