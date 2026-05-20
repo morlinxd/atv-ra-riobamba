@@ -1,83 +1,33 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
-  <title>WebAR MultiTarget</title>
+  <meta charset="utf-8" />
 
-  <!-- AFRAME -->
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 
-  <!-- MINDAR -->
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 
-  <script defer src="./js/app.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-
-    canvas {
-      touch-action: none;
-    }
-
-    #loading {
-      position: fixed;
-      inset: 0;
-      background: black;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      font-family: Arial;
-    }
-  </style>
 </head>
 
 <body>
 
-<div id="loading">
-  Escaneando marcador...
-</div>
-
 <a-scene
-  id="scene"
-  mindar-image="
-    imageTargetSrc: ./targets/murals.mind;
-    autoStart: true;
-    uiScanning: true;
-    uiLoading: true;
-    maxTrack: 1;
-  "
-  color-space="sRGB"
+  mindar-image="imageTargetSrc: ./targets/murals.mind;"
   embedded
-  renderer="
-    colorManagement: true;
-    physicallyCorrectLights: true;
-    precision: mediump;
-  "
+  color-space="sRGB"
+  renderer="colorManagement: true"
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false"
 >
 
-  <a-assets id="assets"></a-assets>
-
   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <!-- TARGET 0 -->
-  <a-entity id="target0" mindar-image-target="targetIndex: 0"></a-entity>
+  <a-entity mindar-image-target="targetIndex: 0">
 
-  <!-- TARGET 1 -->
-  <a-entity id="target1" mindar-image-target="targetIndex: 1"></a-entity>
+    <a-box position="0 0 0" color="red"></a-box>
 
-  <!-- TARGET 2 -->
-  <a-entity id="target2" mindar-image-target="targetIndex: 2"></a-entity>
+  </a-entity>
 
 </a-scene>
 
