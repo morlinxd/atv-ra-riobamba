@@ -82,7 +82,7 @@ async function loadVideo(target, config) {
     "true"
   );
 
-  await video.play().catch(() => {});
+  await video.play().catch(() => { });
 
   const videoEntity =
     document.createElement("a-video");
@@ -122,7 +122,10 @@ async function loadSequence(target, config) {
 
   canvas.height = 720;
 
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", {
+    alpha: true,
+    premultipliedAlpha: false
+  });
 
   const texture =
     new THREE.CanvasTexture(canvas);
