@@ -8,12 +8,12 @@
 
       "android": {
         "type": "video",
-        "src": "./assets/videos/pajaro derecho sin fondo.webm"
+        "src": "./assets/videos/Riobamba sin fondo.webm"
       },
 
       "ios": {
         "type": "sequence",
-        "path": "./assets/pajaro_derecha",
+        "path": "./assets/riobamba",
         "frames": 237,
         "extension": "webp"
       },
