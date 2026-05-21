@@ -1,19 +1,38 @@
-const isIOS =
-  /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isIOS = (() => {
+
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' &&
+      navigator.maxTouchPoints > 1)
+  );
+
+})();
+
+console.log("🍎 iOS:", isIOS);
 
 let sceneData = null;
 
 let activeAnimation = null;
 
+// ======================================
+// INIT
+// ======================================
+
 window.addEventListener("DOMContentLoaded", async () => {
 
-  const response = await fetch("./scene.json");
+  const response = await fetch(
+    `./scene.json?v=${Date.now()}`
+  );
 
   sceneData = await response.json();
 
   initTargets();
 
 });
+
+// ======================================
+// TARGETS
+// ======================================
 
 function initTargets() {
 
@@ -41,9 +60,19 @@ function initTargets() {
 
     });
 
+    target.addEventListener("targetLost", () => {
+
+      cancelAnimationFrame(activeAnimation);
+
+    });
+
   });
 
 }
+
+// ======================================
+// CLEAR
+// ======================================
 
 function clearTargets() {
 
@@ -67,7 +96,8 @@ async function loadVideo(target, config) {
 
   const video = document.createElement("video");
 
-  video.src = config.android.src;
+  video.src =
+    `${config.android.src}?v=${Date.now()}`;
 
   video.crossOrigin = "anonymous";
 
@@ -76,6 +106,8 @@ async function loadVideo(target, config) {
   video.muted = true;
 
   video.playsInline = true;
+
+  video.autoplay = true;
 
   video.setAttribute(
     "webkit-playsinline",
@@ -116,22 +148,29 @@ async function loadSequence(target, config) {
 
   const sequence = config.ios;
 
+  // ======================================
+  // CANVAS
+  // ======================================
+
   const canvas = document.createElement("canvas");
 
   canvas.width = 720;
-
   canvas.height = 720;
 
   const ctx = canvas.getContext("2d", {
-    alpha: true,
-    premultipliedAlpha: false
+    alpha: true
   });
 
-  const texture = new THREE.CanvasTexture(canvas);
+  // ======================================
+  // TEXTURE
+  // ======================================
+
+  const texture =
+    new THREE.CanvasTexture(canvas);
 
   texture.format = THREE.RGBAFormat;
 
-  texture.premultiplyAlpha = false;
+  texture.premultiplyAlpha = true;
 
   texture.generateMipmaps = false;
 
@@ -140,6 +179,10 @@ async function loadSequence(target, config) {
   texture.magFilter = THREE.LinearFilter;
 
   texture.needsUpdate = true;
+
+  // ======================================
+  // PLANE
+  // ======================================
 
   const plane =
     document.createElement("a-plane");
@@ -161,42 +204,13 @@ async function loadSequence(target, config) {
 
   target.appendChild(plane);
 
-  let frame = 1;
+  // ======================================
+  // WAIT MESH
+  // ======================================
 
-  async function animate() {
+  await new Promise((resolve) => {
 
-    const num =
-      String(frame).padStart(4, "0");
-
-    const imagePath =
-      `${sequence.path}/frame_${num}.${sequence.extension}`;
-
-    const img = new Image();
-
-    img.src = imagePath;
-
-    try {
-
-      await img.decode();
-
-      //ctx.globalCompositeOperation = "copy";
-
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      ctx.drawImage(
-        img,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      texture.needsUpdate = true;
+    const interval = setInterval(() => {
 
       const mesh =
         plane.getObject3D("mesh");
@@ -211,22 +225,99 @@ async function loadSequence(target, config) {
 
         mesh.material.depthWrite = false;
 
-        mesh.material.side = THREE.DoubleSide;
+        mesh.material.side =
+          THREE.DoubleSide;
 
-        mesh.material.premultipliedAlpha = false;
+        mesh.material.premultipliedAlpha =
+          true;
 
         mesh.material.opacity = 1;
 
-        mesh.material.needsUpdate = true;
+        mesh.material.blending =
+          THREE.NormalBlending;
 
         mesh.material.needsUpdate = true;
+
+        clearInterval(interval);
+
+        resolve();
 
       }
+
+    }, 16);
+
+  });
+
+  // ======================================
+  // ANIMATION
+  // ======================================
+
+  let frame = 1;
+
+  async function animate() {
+
+    const num =
+      String(frame).padStart(4, "0");
+
+    const imagePath =
+      `${sequence.path}/frame_${num}.${sequence.extension}?v=${frame}`;
+
+    try {
+
+      // ======================================
+      // FETCH PNG
+      // ======================================
+
+      const response =
+        await fetch(imagePath);
+
+      const blob =
+        await response.blob();
+
+      const bitmap =
+        await createImageBitmap(blob);
+
+      // ======================================
+      // CLEAR
+      // ======================================
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      // ======================================
+      // DRAW
+      // ======================================
+
+      ctx.globalCompositeOperation =
+        "source-over";
+
+      ctx.drawImage(
+        bitmap,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      texture.needsUpdate = true;
+
+      // liberar memoria safari
+      bitmap.close();
+
+      // ======================================
+      // NEXT FRAME
+      // ======================================
 
       frame++;
 
       if (frame > sequence.frames) {
+
         frame = 1;
+
       }
 
       activeAnimation =
