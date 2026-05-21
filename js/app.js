@@ -2,8 +2,10 @@ const isIOS = (() => {
 
   return (
     /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === 'MacIntel' &&
-      navigator.maxTouchPoints > 1)
+    (
+      navigator.platform === "MacIntel" &&
+      navigator.maxTouchPoints > 1
+    )
   );
 
 })();
@@ -119,7 +121,10 @@ async function loadVideo(target, config) {
   const videoEntity =
     document.createElement("a-video");
 
-  videoEntity.setAttribute("src", video.src);
+  videoEntity.setAttribute(
+    "src",
+    video.src
+  );
 
   videoEntity.setAttribute(
     "width",
@@ -152,14 +157,16 @@ async function loadSequence(target, config) {
   // CANVAS
   // ======================================
 
-  const canvas = document.createElement("canvas");
+  const canvas =
+    document.createElement("canvas");
 
   canvas.width = 720;
   canvas.height = 720;
 
-  const ctx = canvas.getContext("2d", {
-    alpha: true
-  });
+  const ctx =
+    canvas.getContext("2d", {
+      alpha: true
+    });
 
   // ======================================
   // TEXTURE
@@ -168,9 +175,17 @@ async function loadSequence(target, config) {
   const texture =
     new THREE.CanvasTexture(canvas);
 
-  texture.format = THREE.RGBAFormat;
+  texture.colorSpace =
+    THREE.NoColorSpace;
 
-  texture.premultiplyAlpha = true;
+  texture.format =
+    THREE.RGBAFormat;
+
+  texture.premultiplyAlpha =
+    true;
+
+  texture.generateMipmaps =
+    false;
 
   texture.minFilter =
     THREE.LinearFilter;
@@ -178,7 +193,8 @@ async function loadSequence(target, config) {
   texture.magFilter =
     THREE.LinearFilter;
 
-  texture.generateMipmaps = false;
+  texture.needsUpdate =
+    true;
 
   // ======================================
   // GEOMETRY
@@ -205,7 +221,9 @@ async function loadSequence(target, config) {
 
       side: THREE.DoubleSide,
 
-      depthWrite: false
+      depthWrite: false,
+
+      toneMapped: false
 
     });
 
@@ -248,6 +266,10 @@ async function loadSequence(target, config) {
 
     try {
 
+      // ======================================
+      // FETCH IMAGE
+      // ======================================
+
       const response =
         await fetch(imagePath);
 
@@ -257,12 +279,23 @@ async function loadSequence(target, config) {
       const bitmap =
         await createImageBitmap(blob);
 
+      // ======================================
+      // CLEAR
+      // ======================================
+
       ctx.clearRect(
         0,
         0,
         canvas.width,
         canvas.height
       );
+
+      // ======================================
+      // DRAW
+      // ======================================
+
+      ctx.globalCompositeOperation =
+        "source-over";
 
       ctx.drawImage(
         bitmap,
@@ -274,7 +307,12 @@ async function loadSequence(target, config) {
 
       texture.needsUpdate = true;
 
+      // liberar memoria safari
       bitmap.close();
+
+      // ======================================
+      // NEXT FRAME
+      // ======================================
 
       frame++;
 
