@@ -118,9 +118,9 @@ async function loadSequence(target, config) {
 
   const canvas = document.createElement("canvas");
 
-  canvas.width = 1024;
+  canvas.width = 720;
 
-  canvas.height = 1024;
+  canvas.height = 720;
 
   const ctx = canvas.getContext("2d");
 
