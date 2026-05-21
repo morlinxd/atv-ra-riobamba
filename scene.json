@@ -14,7 +14,7 @@
       "ios": {
         "type": "sequence",
         "path": "./assets/pajaro_derecha",
-        "frames": 180,
+        "frames": 237,
         "extension": "webp"
       },
 

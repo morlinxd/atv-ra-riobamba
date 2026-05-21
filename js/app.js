@@ -116,19 +116,34 @@ async function loadSequence(target, config) {
 
   const sequence = config.ios;
 
+  // =====================================
+  // CANVAS
+  // =====================================
+
   const canvas = document.createElement("canvas");
 
   canvas.width = 1024;
-
   canvas.height = 1024;
 
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", {
+    alpha: true,
+    desynchronized: true
+  });
 
-  const texture =
-    new THREE.CanvasTexture(canvas);
+  // =====================================
+  // TEXTURE
+  // =====================================
 
-  const plane =
-    document.createElement("a-plane");
+  const texture = new THREE.CanvasTexture(canvas);
+
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+
+  // =====================================
+  // PLANE
+  // =====================================
+
+  const plane = document.createElement("a-plane");
 
   plane.setAttribute(
     "width",
@@ -147,70 +162,111 @@ async function loadSequence(target, config) {
 
   target.appendChild(plane);
 
-  let frame = 1;
+  // =====================================
+  // PRELOAD FRAMES
+  // =====================================
 
-  async function animate() {
+  console.log("⚡ Precargando frames...");
 
-    const num =
-      String(frame).padStart(4, "0");
+  const frames = [];
 
-    const imagePath =
-      `${sequence.path}/frame_${num}.${sequence.extension}`;
+  for (let i = 1; i <= sequence.frames; i++) {
+
+    const num = String(i).padStart(4, "0");
 
     const img = new Image();
 
-    img.src = imagePath;
+    img.src =
+      `${sequence.path}/frame_${num}.${sequence.extension}`;
 
-    try {
+    await img.decode();
 
-      await img.decode();
+    frames.push(img);
 
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
+    // progreso
+    if (i % 10 === 0) {
+
+      console.log(
+        `📦 Frames cargados: ${i}/${sequence.frames}`
       );
 
-      ctx.drawImage(
-        img,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
+    }
 
-      texture.needsUpdate = true;
+  }
 
-      const mesh =
-        plane.getObject3D("mesh");
+  console.log("✅ Frames precargados");
 
-      if (mesh) {
+  // =====================================
+  // MESH
+  // =====================================
 
-        mesh.material.map = texture;
+  let mesh = null;
 
-        mesh.material.transparent = true;
+  const waitMesh = setInterval(() => {
 
-        mesh.material.needsUpdate = true;
+    mesh = plane.getObject3D("mesh");
 
-      }
+    if (mesh) {
 
-      frame++;
+      mesh.material.map = texture;
 
-      if (frame > sequence.frames) {
-        frame = 1;
-      }
+      mesh.material.transparent = true;
 
-      activeAnimation =
-        requestAnimationFrame(animate);
+      mesh.material.needsUpdate = true;
 
-    } catch (err) {
+      clearInterval(waitMesh);
 
-      console.error(
-        "❌ Frame error:",
-        imagePath
-      );
+    }
 
+  }, 16);
+
+  // =====================================
+  // ANIMATION
+  // =====================================
+
+  let frame = 0;
+
+  const targetFPS = 24;
+
+  const frameTime = 1000 / targetFPS;
+
+  let lastTime = performance.now();
+
+  function animate(now) {
+
+    activeAnimation =
+      requestAnimationFrame(animate);
+
+    // limitar fps
+    if (now - lastTime < frameTime) return;
+
+    lastTime = now;
+
+    const img = frames[frame];
+
+    if (!img) return;
+
+    ctx.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    ctx.drawImage(
+      img,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    texture.needsUpdate = true;
+
+    frame++;
+
+    if (frame >= frames.length) {
+      frame = 0;
     }
 
   }
