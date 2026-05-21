@@ -127,8 +127,19 @@ async function loadSequence(target, config) {
     premultipliedAlpha: false
   });
 
-  const texture =
-    new THREE.CanvasTexture(canvas);
+  const texture = new THREE.CanvasTexture(canvas);
+
+  texture.format = THREE.RGBAFormat;
+
+  texture.premultiplyAlpha = false;
+
+  texture.generateMipmaps = false;
+
+  texture.minFilter = THREE.LinearFilter;
+
+  texture.magFilter = THREE.LinearFilter;
+
+  texture.needsUpdate = true;
 
   const plane =
     document.createElement("a-plane");
