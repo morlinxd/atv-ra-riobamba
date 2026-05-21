@@ -179,7 +179,7 @@ async function loadSequence(target, config) {
 
       await img.decode();
 
-      ctx.globalCompositeOperation = "copy";
+      //ctx.globalCompositeOperation = "copy";
 
       ctx.clearRect(
         0,
