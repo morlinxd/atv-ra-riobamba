@@ -62,6 +62,27 @@
 
       "width": 7,
       "height": 4
+    },   
+    
+    {
+      "id": 3,
+
+      "type": "hybrid",
+
+      "android": {
+        "type": "video",
+        "src": "./assets/videos/Riobamba sin fondo.webm"
+      },
+
+      "ios": {
+        "type": "sequence",
+        "path": "./assets/riobamba",
+        "frames": 180,
+        "extension": "webp"
+      },
+
+      "width": 7,
+      "height": 4
     }
 
   ]
