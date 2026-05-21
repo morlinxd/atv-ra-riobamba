@@ -172,81 +172,65 @@ async function loadSequence(target, config) {
 
   texture.premultiplyAlpha = true;
 
+  texture.minFilter =
+    THREE.LinearFilter;
+
+  texture.magFilter =
+    THREE.LinearFilter;
+
   texture.generateMipmaps = false;
 
-  texture.minFilter = THREE.LinearFilter;
-
-  texture.magFilter = THREE.LinearFilter;
-
-  texture.needsUpdate = true;
-
   // ======================================
-  // PLANE
+  // GEOMETRY
   // ======================================
 
-  const plane =
-    document.createElement("a-plane");
-
-  plane.setAttribute(
-    "width",
-    config.width || 5
-  );
-
-  plane.setAttribute(
-    "height",
-    config.height || 7
-  );
-
-  plane.setAttribute(
-    "position",
-    "0 0 0"
-  );
-
-  target.appendChild(plane);
+  const geometry =
+    new THREE.PlaneGeometry(
+      config.width || 5,
+      config.height || 7
+    );
 
   // ======================================
-  // WAIT MESH
+  // MATERIAL
   // ======================================
 
-  await new Promise((resolve) => {
+  const material =
+    new THREE.MeshBasicMaterial({
 
-    const interval = setInterval(() => {
+      map: texture,
 
-      const mesh =
-        plane.getObject3D("mesh");
+      transparent: true,
 
-      if (mesh) {
+      alphaTest: 0.01,
 
-        mesh.material.map = texture;
+      side: THREE.DoubleSide,
 
-        mesh.material.transparent = true;
+      depthWrite: false
 
-        mesh.material.alphaTest = 0.01;
+    });
 
-        mesh.material.depthWrite = false;
+  // ======================================
+  // MESH
+  // ======================================
 
-        mesh.material.side =
-          THREE.DoubleSide;
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
 
-        mesh.material.premultipliedAlpha =
-          true;
+  mesh.renderOrder = 999;
 
-        mesh.material.opacity = 1;
+  // ======================================
+  // ENTITY
+  // ======================================
 
-        mesh.material.blending =
-          THREE.NormalBlending;
+  const container =
+    document.createElement("a-entity");
 
-        mesh.material.needsUpdate = true;
+  target.appendChild(container);
 
-        clearInterval(interval);
-
-        resolve();
-
-      }
-
-    }, 16);
-
-  });
+  container.object3D.add(mesh);
 
   // ======================================
   // ANIMATION
@@ -264,10 +248,6 @@ async function loadSequence(target, config) {
 
     try {
 
-      // ======================================
-      // FETCH PNG
-      // ======================================
-
       const response =
         await fetch(imagePath);
 
@@ -277,23 +257,12 @@ async function loadSequence(target, config) {
       const bitmap =
         await createImageBitmap(blob);
 
-      // ======================================
-      // CLEAR
-      // ======================================
-
       ctx.clearRect(
         0,
         0,
         canvas.width,
         canvas.height
       );
-
-      // ======================================
-      // DRAW
-      // ======================================
-
-      ctx.globalCompositeOperation =
-        "source-over";
 
       ctx.drawImage(
         bitmap,
@@ -305,12 +274,7 @@ async function loadSequence(target, config) {
 
       texture.needsUpdate = true;
 
-      // liberar memoria safari
       bitmap.close();
-
-      // ======================================
-      // NEXT FRAME
-      // ======================================
 
       frame++;
 
