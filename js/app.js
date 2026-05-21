@@ -205,6 +205,18 @@ async function loadSequence(target, config) {
 
         mesh.material.transparent = true;
 
+        mesh.material.alphaTest = 0.01;
+
+        mesh.material.depthWrite = false;
+
+        mesh.material.side = THREE.DoubleSide;
+
+        mesh.material.premultipliedAlpha = false;
+
+        mesh.material.opacity = 1;
+
+        mesh.material.needsUpdate = true;
+
         mesh.material.needsUpdate = true;
 
       }
