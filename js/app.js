@@ -50,15 +50,7 @@ function initTargets() {
 
       clearTargets();
 
-      if (isIOS) {
-
-        await loadVideo(target, config);
-
-      } else {
-
-        await loadVideo(target, config);
-
-      }
+      await loadVideo(target, config);
 
     });
 
@@ -88,10 +80,21 @@ function clearTargets() {
 
     });
 
+  // eliminar videos viejos
+  document
+    .querySelectorAll("video[data-ar-video]")
+    .forEach((video) => {
+
+      video.pause();
+
+      video.remove();
+
+    });
+
 }
 
 // ======================================
-// VIDEO ANDROID
+// VIDEO
 // ======================================
 
 async function loadVideo(target, config) {
@@ -100,10 +103,22 @@ async function loadVideo(target, config) {
     ? config.ios.src
     : config.android.src;
 
+  console.log("🎬 SOURCE:", source);
+
+  // ======================================
+  // VIDEO ELEMENT
+  // ======================================
+
   const video = document.createElement("video");
 
-  video.src =
-    `${source}?v=${Date.now()}`;
+  video.id = `video-${config.id}`;
+
+  video.setAttribute(
+    "data-ar-video",
+    "true"
+  );
+
+  video.src = `${source}?v=${Date.now()}`;
 
   video.crossOrigin = "anonymous";
 
@@ -111,23 +126,95 @@ async function loadVideo(target, config) {
 
   video.muted = true;
 
+  video.autoplay = true;
+
   video.playsInline = true;
 
-  video.autoplay = true;
+  video.preload = "auto";
 
   video.setAttribute(
     "webkit-playsinline",
     "true"
   );
 
-  await video.play().catch(() => { });
+  video.setAttribute(
+    "playsinline",
+    "true"
+  );
+
+  // ocultar video HTML
+  video.style.position = "fixed";
+
+  video.style.opacity = "0";
+
+  video.style.pointerEvents = "none";
+
+  video.style.width = "1px";
+
+  video.style.height = "1px";
+
+  // ======================================
+  // ADD TO DOM
+  // ======================================
+
+  document.body.appendChild(video);
+
+  // ======================================
+  // WAIT VIDEO READY
+  // ======================================
+
+  await new Promise((resolve, reject) => {
+
+    video.onloadeddata = () => {
+
+      console.log("✅ VIDEO READY");
+
+      resolve();
+
+    };
+
+    video.onerror = (e) => {
+
+      console.error(
+        "❌ VIDEO ERROR",
+        e
+      );
+
+      reject(e);
+
+    };
+
+  });
+
+  // ======================================
+  // PLAY
+  // ======================================
+
+  try {
+
+    await video.play();
+
+    console.log("▶️ PLAYING");
+
+  } catch (err) {
+
+    console.error(
+      "❌ PLAY ERROR",
+      err
+    );
+
+  }
+
+  // ======================================
+  // AFRAME VIDEO
+  // ======================================
 
   const videoEntity =
     document.createElement("a-video");
 
   videoEntity.setAttribute(
     "src",
-    video.src
+    `#${video.id}`
   );
 
   videoEntity.setAttribute(
@@ -145,201 +232,11 @@ async function loadVideo(target, config) {
     "0 0 0"
   );
 
+  videoEntity.setAttribute(
+    "material",
+    "shader: flat"
+  );
+
   target.appendChild(videoEntity);
-
-}
-
-// ======================================
-// SEQUENCE IOS
-// ======================================
-
-async function loadSequence(target, config) {
-
-  const sequence = config.ios;
-
-  // ======================================
-  // CANVAS
-  // ======================================
-
-  const canvas =
-    document.createElement("canvas");
-
-  canvas.width = 512;
-  canvas.height = 512;
-
-  const ctx =
-    canvas.getContext("2d", {
-      alpha: true
-    });
-
-  // ======================================
-  // TEXTURE
-  // ======================================
-
-  const texture =
-    new THREE.CanvasTexture(canvas);
-
-  texture.colorSpace =
-    THREE.NoColorSpace;
-
-  texture.format =
-    THREE.RGBAFormat;
-
-  texture.premultiplyAlpha =
-    true;
-
-  texture.generateMipmaps =
-    false;
-
-  texture.minFilter =
-    THREE.LinearFilter;
-
-  texture.magFilter =
-    THREE.LinearFilter;
-
-  texture.needsUpdate =
-    true;
-
-  // ======================================
-  // GEOMETRY
-  // ======================================
-
-  const geometry =
-    new THREE.PlaneGeometry(
-      config.width || 5,
-      config.height || 7
-    );
-
-  // ======================================
-  // MATERIAL
-  // ======================================
-
-  const material =
-    new THREE.MeshBasicMaterial({
-
-      map: texture,
-
-      transparent: true,
-
-      alphaTest: 0.01,
-
-      side: THREE.DoubleSide,
-
-      depthWrite: false,
-
-      toneMapped: false
-
-    });
-
-  // ======================================
-  // MESH
-  // ======================================
-
-  const mesh =
-    new THREE.Mesh(
-      geometry,
-      material
-    );
-
-  mesh.renderOrder = 999;
-
-  // ======================================
-  // ENTITY
-  // ======================================
-
-  const container =
-    document.createElement("a-entity");
-
-  target.appendChild(container);
-
-  container.object3D.add(mesh);
-
-  // ======================================
-  // ANIMATION
-  // ======================================
-
-  let frame = 1;
-
-  async function animate() {
-
-    const num =
-      String(frame).padStart(4, "0");
-
-    const imagePath =
-      `${sequence.path}/frame_${num}.${sequence.extension}?v=${frame}`;
-
-    try {
-
-      // ======================================
-      // FETCH IMAGE
-      // ======================================
-
-      const response =
-        await fetch(imagePath);
-
-      const blob =
-        await response.blob();
-
-      const bitmap =
-        await createImageBitmap(blob);
-
-      // ======================================
-      // CLEAR
-      // ======================================
-
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      // ======================================
-      // DRAW
-      // ======================================
-
-      ctx.globalCompositeOperation =
-        "source-over";
-
-      ctx.drawImage(
-        bitmap,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      texture.needsUpdate = true;
-
-      // liberar memoria safari
-      bitmap.close();
-
-      // ======================================
-      // NEXT FRAME
-      // ======================================
-
-      frame++;
-
-      if (frame > sequence.frames) {
-
-        frame = 1;
-
-      }
-
-      activeAnimation =
-        requestAnimationFrame(animate);
-
-    } catch (err) {
-
-      console.error(
-        "❌ Frame error:",
-        imagePath
-      );
-
-    }
-
-  }
-
-  animate();
 
 }
