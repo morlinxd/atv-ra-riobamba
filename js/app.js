@@ -190,20 +190,32 @@ async function loadVideo(target, config) {
   // PLAY
   // ======================================
 
-  try {
+  const playVideo = async () => {
 
-    await video.play();
+    try {
 
-    console.log("▶️ PLAYING");
+      await video.play();
 
-  } catch (err) {
+      console.log("▶️ PLAYING");
 
-    console.error(
-      "❌ PLAY ERROR",
-      err
-    );
+    } catch (err) {
 
-  }
+      console.error(
+        "❌ PLAY ERROR",
+        err
+      );
+
+    }
+
+  };
+
+  await playVideo();
+
+  document.body.addEventListener(
+    "touchstart",
+    playVideo,
+    { once: true }
+  );
 
   // ======================================
   // AFRAME VIDEO
