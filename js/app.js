@@ -52,7 +52,7 @@ function initTargets() {
 
       if (isIOS) {
 
-        await loadSequence(target, config);
+        await loadVideo(target, config);
 
       } else {
 
