@@ -249,6 +249,20 @@ async function loadVideo(target, config) {
     "shader: flat"
   );
 
+  // ======================================
+  // TRANSPARENCIA IOS
+  // ======================================
+
+  videoEntity.setAttribute(
+    "transparent",
+    "true"
+  );
+
+  videoEntity.setAttribute(
+    "alpha-test",
+    "0.01"
+  );
+
   target.appendChild(videoEntity);
 
 }
