@@ -96,10 +96,14 @@ function clearTargets() {
 
 async function loadVideo(target, config) {
 
+  const source = isIOS
+    ? config.ios.src
+    : config.android.src;
+
   const video = document.createElement("video");
 
   video.src =
-    `${config.android.src}?v=${Date.now()}`;
+    `${source}?v=${Date.now()}`;
 
   video.crossOrigin = "anonymous";
 
