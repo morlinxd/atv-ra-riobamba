@@ -1,9 +1,7 @@
 const isIOS = (() => {
 
   return (
-    /iPad|iPhone|iPod/.test(
-      navigator.userAgent
-    ) ||
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
     (
       navigator.platform === "MacIntel" &&
       navigator.maxTouchPoints > 1
@@ -16,123 +14,74 @@ console.log("🍎 iOS:", isIOS);
 
 let sceneData = null;
 
+let activeAnimation = null;
+
 // ======================================
 // INIT
 // ======================================
 
-window.addEventListener(
-  "DOMContentLoaded",
-  async () => {
+window.addEventListener("DOMContentLoaded", async () => {
 
-    try {
+  const response = await fetch(
+    `./scene.json?v=${Date.now()}`
+  );
 
-      const response =
-        await fetch(
-          `./scene.json?v=${Date.now()}`
-        );
+  sceneData = await response.json();
 
-      sceneData =
-        await response.json();
+  initTargets();
 
-      console.log(
-        "✅ scene.json loaded"
-      );
-
-      initTargets();
-
-    } catch (err) {
-
-      console.error(
-        "❌ scene.json error:",
-        err
-      );
-
-    }
-
-  }
-);
+});
 
 // ======================================
-// INIT TARGETS
+// TARGETS
 // ======================================
 
 function initTargets() {
 
   sceneData.targets.forEach((config) => {
 
-    const target =
-      document.querySelector(
-        `[mindar-image-target="targetIndex: ${config.id}"]`
-      );
-
-    if (!target) {
-
-      console.warn(
-        "⚠️ Target not found:",
-        config.id
-      );
-
-      return;
-
-    }
-
-    // ======================================
-    // TARGET FOUND
-    // ======================================
-
-    target.addEventListener(
-      "targetFound",
-      async () => {
-
-        console.log(
-          "🎯 TARGET FOUND:",
-          config.id
-        );
-
-        clearTargets();
-
-        await loadVideo(
-          target,
-          config
-        );
-
-      }
+    const target = document.querySelector(
+      `[mindar-image-target="targetIndex: ${config.id}"]`
     );
 
-    // ======================================
-    // TARGET LOST
-    // ======================================
+    target.addEventListener("targetFound", async () => {
 
-    target.addEventListener(
-      "targetLost",
-      () => {
+      console.log("🎯 TARGET:", config.id);
 
-        console.log(
-          "❌ TARGET LOST:",
-          config.id
-        );
+      clearTargets();
 
-        stopAllVideos();
+      if (isIOS) {
+
+        await loadSequence(target, config);
+
+      } else {
+
+        await loadVideo(target, config);
 
       }
-    );
+
+    });
+
+    target.addEventListener("targetLost", () => {
+
+      cancelAnimationFrame(activeAnimation);
+
+    });
 
   });
 
 }
 
 // ======================================
-// CLEAR TARGETS
+// CLEAR
 // ======================================
 
 function clearTargets() {
 
-  stopAllVideos();
+  cancelAnimationFrame(activeAnimation);
 
   document
-    .querySelectorAll(
-      "[mindar-image-target]"
-    )
+    .querySelectorAll("[mindar-image-target]")
     .forEach((target) => {
 
       target.innerHTML = "";
@@ -142,172 +91,251 @@ function clearTargets() {
 }
 
 // ======================================
-// STOP VIDEOS
+// VIDEO ANDROID
 // ======================================
 
-function stopAllVideos() {
+async function loadVideo(target, config) {
 
-  const videos =
-    document.querySelectorAll("video");
+  const video = document.createElement("video");
 
-  videos.forEach((video) => {
+  video.src =
+    `${config.android.src}?v=${Date.now()}`;
 
-    try {
+  video.crossOrigin = "anonymous";
 
-      video.pause();
-      video.currentTime = 0;
+  video.loop = true;
 
-    } catch (err) {}
+  video.muted = true;
 
-  });
+  video.playsInline = true;
+
+  video.autoplay = true;
+
+  video.setAttribute(
+    "webkit-playsinline",
+    "true"
+  );
+
+  await video.play().catch(() => { });
+
+  const videoEntity =
+    document.createElement("a-video");
+
+  videoEntity.setAttribute(
+    "src",
+    video.src
+  );
+
+  videoEntity.setAttribute(
+    "width",
+    config.width || 5
+  );
+
+  videoEntity.setAttribute(
+    "height",
+    config.height || 7
+  );
+
+  videoEntity.setAttribute(
+    "position",
+    "0 0 0"
+  );
+
+  target.appendChild(videoEntity);
 
 }
 
 // ======================================
-// LOAD VIDEO
+// SEQUENCE IOS
 // ======================================
 
-async function loadVideo(
-  target,
-  config
-) {
+async function loadSequence(target, config) {
 
-  try {
+  const sequence = config.ios;
 
-    // ======================================
-    // SOURCE
-    // ======================================
+  // ======================================
+  // CANVAS
+  // ======================================
 
-    const src = isIOS
-      ? config.ios.src
-      : config.android.src;
+  const canvas =
+    document.createElement("canvas");
 
-    console.log(
-      "📹 Loading:",
-      src
-    );
+  canvas.width = 512;
+  canvas.height = 512;
 
-    // ======================================
-    // VIDEO ELEMENT
-    // ======================================
-
-    const video =
-      document.createElement("video");
-
-    video.src =
-      `${src}?v=${Date.now()}`;
-
-    video.crossOrigin =
-      "anonymous";
-
-    video.loop = true;
-
-    video.muted = true;
-
-    video.autoplay = true;
-
-    video.playsInline = true;
-
-    video.preload = "auto";
-
-    video.setAttribute(
-      "webkit-playsinline",
-      "true"
-    );
-
-    video.setAttribute(
-      "playsinline",
-      "true"
-    );
-
-    video.setAttribute(
-      "muted",
-      ""
-    );
-
-    video.setAttribute(
-      "autoplay",
-      ""
-    );
-
-    // ======================================
-    // WAIT READY
-    // ======================================
-
-    await new Promise((resolve) => {
-
-      video.onloadeddata = () => {
-
-        console.log(
-          "✅ Video loaded"
-        );
-
-        resolve();
-
-      };
-
+  const ctx =
+    canvas.getContext("2d", {
+      alpha: true
     });
 
-    // ======================================
-    // PLAY
-    // ======================================
+  // ======================================
+  // TEXTURE
+  // ======================================
 
-    await video.play();
+  const texture =
+    new THREE.CanvasTexture(canvas);
 
-    // ======================================
-    // VIDEO ENTITY
-    // ======================================
+  texture.colorSpace =
+    THREE.NoColorSpace;
 
-    const videoEntity =
-      document.createElement(
-        "a-video"
-      );
+  texture.format =
+    THREE.RGBAFormat;
 
-    videoEntity.setAttribute(
-      "src",
-      video.src
-    );
+  texture.premultiplyAlpha =
+    true;
 
-    videoEntity.setAttribute(
-      "width",
-      config.width || 5
-    );
+  texture.generateMipmaps =
+    false;
 
-    videoEntity.setAttribute(
-      "height",
+  texture.minFilter =
+    THREE.LinearFilter;
+
+  texture.magFilter =
+    THREE.LinearFilter;
+
+  texture.needsUpdate =
+    true;
+
+  // ======================================
+  // GEOMETRY
+  // ======================================
+
+  const geometry =
+    new THREE.PlaneGeometry(
+      config.width || 5,
       config.height || 7
     );
 
-    videoEntity.setAttribute(
-      "position",
-      "0 0 0"
+  // ======================================
+  // MATERIAL
+  // ======================================
+
+  const material =
+    new THREE.MeshBasicMaterial({
+
+      map: texture,
+
+      transparent: true,
+
+      alphaTest: 0.01,
+
+      side: THREE.DoubleSide,
+
+      depthWrite: false,
+
+      toneMapped: false
+
+    });
+
+  // ======================================
+  // MESH
+  // ======================================
+
+  const mesh =
+    new THREE.Mesh(
+      geometry,
+      material
     );
 
-    videoEntity.setAttribute(
-      "material",
-      `
-      shader: flat;
-      transparent: true;
-      alphaTest: 0.01;
-      side: double;
-      `
-    );
+  mesh.renderOrder = 999;
 
-    target.appendChild(
-      videoEntity
-    );
+  // ======================================
+  // ENTITY
+  // ======================================
 
-    console.log(
-      "✅ Video entity created"
-    );
+  const container =
+    document.createElement("a-entity");
 
-  } catch (err) {
+  target.appendChild(container);
 
-    console.error(
-      "❌ loadVideo error:",
-      err
-    );
+  container.object3D.add(mesh);
+
+  // ======================================
+  // ANIMATION
+  // ======================================
+
+  let frame = 1;
+
+  async function animate() {
+
+    const num =
+      String(frame).padStart(4, "0");
+
+    const imagePath =
+      `${sequence.path}/frame_${num}.${sequence.extension}?v=${frame}`;
+
+    try {
+
+      // ======================================
+      // FETCH IMAGE
+      // ======================================
+
+      const response =
+        await fetch(imagePath);
+
+      const blob =
+        await response.blob();
+
+      const bitmap =
+        await createImageBitmap(blob);
+
+      // ======================================
+      // CLEAR
+      // ======================================
+
+      ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      // ======================================
+      // DRAW
+      // ======================================
+
+      ctx.globalCompositeOperation =
+        "source-over";
+
+      ctx.drawImage(
+        bitmap,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      texture.needsUpdate = true;
+
+      // liberar memoria safari
+      bitmap.close();
+
+      // ======================================
+      // NEXT FRAME
+      // ======================================
+
+      frame++;
+
+      if (frame > sequence.frames) {
+
+        frame = 1;
+
+      }
+
+      activeAnimation =
+        requestAnimationFrame(animate);
+
+    } catch (err) {
+
+      console.error(
+        "❌ Frame error:",
+        imagePath
+      );
+
+    }
 
   }
+
+  animate();
 
 }
