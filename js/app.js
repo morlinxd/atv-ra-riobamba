@@ -160,8 +160,8 @@ async function loadSequence(target, config) {
   const canvas =
     document.createElement("canvas");
 
-  canvas.width = 720;
-  canvas.height = 720;
+  canvas.width = 512;
+  canvas.height = 512;
 
   const ctx =
     canvas.getContext("2d", {
