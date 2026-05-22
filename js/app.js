@@ -1,7 +1,9 @@
 const isIOS = (() => {
 
   return (
-    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    /iPad|iPhone|iPod/.test(
+      navigator.userAgent
+    ) ||
     (
       navigator.platform === "MacIntel" &&
       navigator.maxTouchPoints > 1
@@ -14,74 +16,123 @@ console.log("🍎 iOS:", isIOS);
 
 let sceneData = null;
 
-let activeAnimation = null;
-
 // ======================================
 // INIT
 // ======================================
 
-window.addEventListener("DOMContentLoaded", async () => {
+window.addEventListener(
+  "DOMContentLoaded",
+  async () => {
 
-  const response = await fetch(
-    `./scene.json?v=${Date.now()}`
-  );
+    try {
 
-  sceneData = await response.json();
+      const response =
+        await fetch(
+          `./scene.json?v=${Date.now()}`
+        );
 
-  initTargets();
+      sceneData =
+        await response.json();
 
-});
+      console.log(
+        "✅ scene.json loaded"
+      );
+
+      initTargets();
+
+    } catch (err) {
+
+      console.error(
+        "❌ scene.json error:",
+        err
+      );
+
+    }
+
+  }
+);
 
 // ======================================
-// TARGETS
+// INIT TARGETS
 // ======================================
 
 function initTargets() {
 
   sceneData.targets.forEach((config) => {
 
-    const target = document.querySelector(
-      `[mindar-image-target="targetIndex: ${config.id}"]`
-    );
+    const target =
+      document.querySelector(
+        `[mindar-image-target="targetIndex: ${config.id}"]`
+      );
 
-    target.addEventListener("targetFound", async () => {
+    if (!target) {
 
-      console.log("🎯 TARGET:", config.id);
+      console.warn(
+        "⚠️ Target not found:",
+        config.id
+      );
 
-      clearTargets();
+      return;
 
-      if (isIOS) {
+    }
 
-        await loadSequence(target, config);
+    // ======================================
+    // TARGET FOUND
+    // ======================================
 
-      } else {
+    target.addEventListener(
+      "targetFound",
+      async () => {
 
-        await loadVideo(target, config);
+        console.log(
+          "🎯 TARGET FOUND:",
+          config.id
+        );
+
+        clearTargets();
+
+        await loadVideo(
+          target,
+          config
+        );
 
       }
+    );
 
-    });
+    // ======================================
+    // TARGET LOST
+    // ======================================
 
-    target.addEventListener("targetLost", () => {
+    target.addEventListener(
+      "targetLost",
+      () => {
 
-      cancelAnimationFrame(activeAnimation);
+        console.log(
+          "❌ TARGET LOST:",
+          config.id
+        );
 
-    });
+        stopAllVideos();
+
+      }
+    );
 
   });
 
 }
 
 // ======================================
-// CLEAR
+// CLEAR TARGETS
 // ======================================
 
 function clearTargets() {
 
-  cancelAnimationFrame(activeAnimation);
+  stopAllVideos();
 
   document
-    .querySelectorAll("[mindar-image-target]")
+    .querySelectorAll(
+      "[mindar-image-target]"
+    )
     .forEach((target) => {
 
       target.innerHTML = "";
@@ -91,251 +142,172 @@ function clearTargets() {
 }
 
 // ======================================
-// VIDEO ANDROID
+// STOP VIDEOS
 // ======================================
 
-async function loadVideo(target, config) {
+function stopAllVideos() {
 
-  const video = document.createElement("video");
+  const videos =
+    document.querySelectorAll("video");
 
-  video.src =
-    `${config.android.src}?v=${Date.now()}`;
+  videos.forEach((video) => {
 
-  video.crossOrigin = "anonymous";
+    try {
 
-  video.loop = true;
+      video.pause();
+      video.currentTime = 0;
 
-  video.muted = true;
+    } catch (err) {}
 
-  video.playsInline = true;
-
-  video.autoplay = true;
-
-  video.setAttribute(
-    "webkit-playsinline",
-    "true"
-  );
-
-  await video.play().catch(() => { });
-
-  const videoEntity =
-    document.createElement("a-video");
-
-  videoEntity.setAttribute(
-    "src",
-    video.src
-  );
-
-  videoEntity.setAttribute(
-    "width",
-    config.width || 5
-  );
-
-  videoEntity.setAttribute(
-    "height",
-    config.height || 7
-  );
-
-  videoEntity.setAttribute(
-    "position",
-    "0 0 0"
-  );
-
-  target.appendChild(videoEntity);
+  });
 
 }
 
 // ======================================
-// SEQUENCE IOS
+// LOAD VIDEO
 // ======================================
 
-async function loadSequence(target, config) {
+async function loadVideo(
+  target,
+  config
+) {
 
-  const sequence = config.ios;
+  try {
 
-  // ======================================
-  // CANVAS
-  // ======================================
+    // ======================================
+    // SOURCE
+    // ======================================
 
-  const canvas =
-    document.createElement("canvas");
+    const src = isIOS
+      ? config.ios.src
+      : config.android.src;
 
-  canvas.width = 512;
-  canvas.height = 512;
+    console.log(
+      "📹 Loading:",
+      src
+    );
 
-  const ctx =
-    canvas.getContext("2d", {
-      alpha: true
+    // ======================================
+    // VIDEO ELEMENT
+    // ======================================
+
+    const video =
+      document.createElement("video");
+
+    video.src =
+      `${src}?v=${Date.now()}`;
+
+    video.crossOrigin =
+      "anonymous";
+
+    video.loop = true;
+
+    video.muted = true;
+
+    video.autoplay = true;
+
+    video.playsInline = true;
+
+    video.preload = "auto";
+
+    video.setAttribute(
+      "webkit-playsinline",
+      "true"
+    );
+
+    video.setAttribute(
+      "playsinline",
+      "true"
+    );
+
+    video.setAttribute(
+      "muted",
+      ""
+    );
+
+    video.setAttribute(
+      "autoplay",
+      ""
+    );
+
+    // ======================================
+    // WAIT READY
+    // ======================================
+
+    await new Promise((resolve) => {
+
+      video.onloadeddata = () => {
+
+        console.log(
+          "✅ Video loaded"
+        );
+
+        resolve();
+
+      };
+
     });
 
-  // ======================================
-  // TEXTURE
-  // ======================================
+    // ======================================
+    // PLAY
+    // ======================================
 
-  const texture =
-    new THREE.CanvasTexture(canvas);
+    await video.play();
 
-  texture.colorSpace =
-    THREE.NoColorSpace;
+    // ======================================
+    // VIDEO ENTITY
+    // ======================================
 
-  texture.format =
-    THREE.RGBAFormat;
+    const videoEntity =
+      document.createElement(
+        "a-video"
+      );
 
-  texture.premultiplyAlpha =
-    true;
+    videoEntity.setAttribute(
+      "src",
+      video.src
+    );
 
-  texture.generateMipmaps =
-    false;
+    videoEntity.setAttribute(
+      "width",
+      config.width || 5
+    );
 
-  texture.minFilter =
-    THREE.LinearFilter;
-
-  texture.magFilter =
-    THREE.LinearFilter;
-
-  texture.needsUpdate =
-    true;
-
-  // ======================================
-  // GEOMETRY
-  // ======================================
-
-  const geometry =
-    new THREE.PlaneGeometry(
-      config.width || 5,
+    videoEntity.setAttribute(
+      "height",
       config.height || 7
     );
 
-  // ======================================
-  // MATERIAL
-  // ======================================
-
-  const material =
-    new THREE.MeshBasicMaterial({
-
-      map: texture,
-
-      transparent: true,
-
-      alphaTest: 0.01,
-
-      side: THREE.DoubleSide,
-
-      depthWrite: false,
-
-      toneMapped: false
-
-    });
-
-  // ======================================
-  // MESH
-  // ======================================
-
-  const mesh =
-    new THREE.Mesh(
-      geometry,
-      material
+    videoEntity.setAttribute(
+      "position",
+      "0 0 0"
     );
 
-  mesh.renderOrder = 999;
+    videoEntity.setAttribute(
+      "material",
+      `
+      shader: flat;
+      transparent: true;
+      alphaTest: 0.01;
+      side: double;
+      `
+    );
 
-  // ======================================
-  // ENTITY
-  // ======================================
+    target.appendChild(
+      videoEntity
+    );
 
-  const container =
-    document.createElement("a-entity");
+    console.log(
+      "✅ Video entity created"
+    );
 
-  target.appendChild(container);
+  } catch (err) {
 
-  container.object3D.add(mesh);
-
-  // ======================================
-  // ANIMATION
-  // ======================================
-
-  let frame = 1;
-
-  async function animate() {
-
-    const num =
-      String(frame).padStart(4, "0");
-
-    const imagePath =
-      `${sequence.path}/frame_${num}.${sequence.extension}?v=${frame}`;
-
-    try {
-
-      // ======================================
-      // FETCH IMAGE
-      // ======================================
-
-      const response =
-        await fetch(imagePath);
-
-      const blob =
-        await response.blob();
-
-      const bitmap =
-        await createImageBitmap(blob);
-
-      // ======================================
-      // CLEAR
-      // ======================================
-
-      ctx.clearRect(
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      // ======================================
-      // DRAW
-      // ======================================
-
-      ctx.globalCompositeOperation =
-        "source-over";
-
-      ctx.drawImage(
-        bitmap,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      texture.needsUpdate = true;
-
-      // liberar memoria safari
-      bitmap.close();
-
-      // ======================================
-      // NEXT FRAME
-      // ======================================
-
-      frame++;
-
-      if (frame > sequence.frames) {
-
-        frame = 1;
-
-      }
-
-      activeAnimation =
-        requestAnimationFrame(animate);
-
-    } catch (err) {
-
-      console.error(
-        "❌ Frame error:",
-        imagePath
-      );
-
-    }
+    console.error(
+      "❌ loadVideo error:",
+      err
+    );
 
   }
-
-  animate();
 
 }

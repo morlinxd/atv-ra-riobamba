@@ -12,10 +12,8 @@
       },
 
       "ios": {
-        "type": "sequence",
-        "path": "./assets/riobamba",
-        "frames": 481,
-        "extension": "png"
+        "src": "https://kubox-ar-assets.s3.amazonaws.com/Riobamba sin fondo.mov"
+
       },
 
       "width": 5,
