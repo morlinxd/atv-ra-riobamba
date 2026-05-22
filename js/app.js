@@ -27,25 +27,18 @@ window.addEventListener(
     try {
 
       const response =
-        await fetch(
-          `./scene.json?v=${Date.now()}`
-        );
+        await fetch("./scene.json");
 
       sceneData =
         await response.json();
 
-      console.log(
-        "✅ scene.json loaded"
-      );
+      await preloadVideos();
 
       initTargets();
 
     } catch (err) {
 
-      console.error(
-        "❌ scene.json error:",
-        err
-      );
+      console.error(err);
 
     }
 
@@ -53,149 +46,25 @@ window.addEventListener(
 );
 
 // ======================================
-// INIT TARGETS
+// PRELOAD
 // ======================================
 
-function initTargets() {
+async function preloadVideos() {
+
+  const assets =
+    document.querySelector("a-assets");
 
   sceneData.targets.forEach((config) => {
-
-    const target =
-      document.querySelector(
-        `[mindar-image-target="targetIndex: ${config.id}"]`
-      );
-
-    if (!target) {
-
-      console.warn(
-        "⚠️ Target not found:",
-        config.id
-      );
-
-      return;
-
-    }
-
-    // ======================================
-    // TARGET FOUND
-    // ======================================
-
-    target.addEventListener(
-      "targetFound",
-      async () => {
-
-        console.log(
-          "🎯 TARGET FOUND:",
-          config.id
-        );
-
-        clearTargets();
-
-        await loadVideo(
-          target,
-          config
-        );
-
-      }
-    );
-
-    // ======================================
-    // TARGET LOST
-    // ======================================
-
-    target.addEventListener(
-      "targetLost",
-      () => {
-
-        console.log(
-          "❌ TARGET LOST:",
-          config.id
-        );
-
-        stopAllVideos();
-
-      }
-    );
-
-  });
-
-}
-
-// ======================================
-// CLEAR TARGETS
-// ======================================
-
-function clearTargets() {
-
-  stopAllVideos();
-
-  document
-    .querySelectorAll(
-      "[mindar-image-target]"
-    )
-    .forEach((target) => {
-
-      target.innerHTML = "";
-
-    });
-
-}
-
-// ======================================
-// STOP VIDEOS
-// ======================================
-
-function stopAllVideos() {
-
-  const videos =
-    document.querySelectorAll("video");
-
-  videos.forEach((video) => {
-
-    try {
-
-      video.pause();
-      video.currentTime = 0;
-
-    } catch (err) {}
-
-  });
-
-}
-
-// ======================================
-// LOAD VIDEO
-// ======================================
-
-async function loadVideo(
-  target,
-  config
-) {
-
-  try {
-
-    // ======================================
-    // SOURCE
-    // ======================================
-
-    const src = isIOS
-      ? config.ios.src
-      : config.android.src;
-
-    console.log(
-      "📹 Loading:",
-      src
-    );
-
-    // ======================================
-    // VIDEO ELEMENT
-    // ======================================
 
     const video =
       document.createElement("video");
 
-    video.src =
-      `${src}?v=${Date.now()}`;
+    video.id =
+      `video-${config.id}`;
+
+    video.src = isIOS
+      ? config.ios.src
+      : config.android.src;
 
     video.crossOrigin =
       "anonymous";
@@ -204,11 +73,9 @@ async function loadVideo(
 
     video.muted = true;
 
-    video.autoplay = true;
+    video.preload = "auto";
 
     video.playsInline = true;
-
-    video.preload = "auto";
 
     video.setAttribute(
       "webkit-playsinline",
@@ -225,89 +92,137 @@ async function loadVideo(
       ""
     );
 
-    video.setAttribute(
-      "autoplay",
-      ""
-    );
+    assets.appendChild(video);
 
-    // ======================================
-    // WAIT READY
-    // ======================================
+  });
 
-    await new Promise((resolve) => {
+}
 
-      video.onloadeddata = () => {
+// ======================================
+// TARGETS
+// ======================================
 
-        console.log(
-          "✅ Video loaded"
-        );
+function initTargets() {
 
-        resolve();
+  sceneData.targets.forEach((config) => {
 
-      };
-
-    });
-
-    // ======================================
-    // PLAY
-    // ======================================
-
-    await video.play();
-
-    // ======================================
-    // VIDEO ENTITY
-    // ======================================
-
-    const videoEntity =
-      document.createElement(
-        "a-video"
+    const target =
+      document.querySelector(
+        `[mindar-image-target="targetIndex: ${config.id}"]`
       );
 
-    videoEntity.setAttribute(
-      "src",
-      video.src
+    const video =
+      document.querySelector(
+        `#video-${config.id}`
+      );
+
+    let videoEntity = null;
+
+    // ======================================
+    // FOUND
+    // ======================================
+
+    target.addEventListener(
+      "targetFound",
+      async () => {
+
+        console.log(
+          "🎯 TARGET:",
+          config.id
+        );
+
+        stopAllVideos();
+
+        // PLAY
+        await video.play().catch(() => {});
+
+        // evitar duplicados
+        if (videoEntity) return;
+
+        // ENTITY
+        videoEntity =
+          document.createElement(
+            "a-video"
+          );
+
+        videoEntity.setAttribute(
+          "src",
+          `#video-${config.id}`
+        );
+
+        videoEntity.setAttribute(
+          "width",
+          config.width || 5
+        );
+
+        videoEntity.setAttribute(
+          "height",
+          config.height || 7
+        );
+
+        videoEntity.setAttribute(
+          "position",
+          "0 0 0"
+        );
+
+        videoEntity.setAttribute(
+          "material",
+          `
+          shader: flat;
+          transparent: true;
+          alphaTest: 0.01;
+          side: double;
+          `
+        );
+
+        target.appendChild(
+          videoEntity
+        );
+
+      }
     );
 
-    videoEntity.setAttribute(
-      "width",
-      config.width || 5
+    // ======================================
+    // LOST
+    // ======================================
+
+    target.addEventListener(
+      "targetLost",
+      () => {
+
+        console.log(
+          "❌ LOST:",
+          config.id
+        );
+
+        video.pause();
+
+      }
     );
 
-    videoEntity.setAttribute(
-      "height",
-      config.height || 7
-    );
+  });
 
-    videoEntity.setAttribute(
-      "position",
-      "0 0 0"
-    );
+}
 
-    videoEntity.setAttribute(
-      "material",
-      `
-      shader: flat;
-      transparent: true;
-      alphaTest: 0.01;
-      side: double;
-      `
-    );
+// ======================================
+// STOP
+// ======================================
 
-    target.appendChild(
-      videoEntity
-    );
+function stopAllVideos() {
 
-    console.log(
-      "✅ Video entity created"
-    );
+  sceneData.targets.forEach((config) => {
 
-  } catch (err) {
+    const video =
+      document.querySelector(
+        `#video-${config.id}`
+      );
 
-    console.error(
-      "❌ loadVideo error:",
-      err
-    );
+    if (!video) return;
 
-  }
+    video.pause();
+
+    video.currentTime = 0;
+
+  });
 
 }
