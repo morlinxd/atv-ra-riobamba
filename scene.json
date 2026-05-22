@@ -12,7 +12,7 @@
       },
 
       "ios": {
-        "src": "https://kubox-ar-assets.s3.amazonaws.com/Riobambasinfondo.mov"
+        "src": "https://kubox-ar-assets.s3.us-east-1.amazonaws.com/Riobambasinfondo.mov"
 
       },
 
